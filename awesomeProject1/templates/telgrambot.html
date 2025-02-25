@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление уведомлениями</title>
+    <style>
+        /* Общие стили */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #f4f4f4;
+            text-align: center;
+            padding-top: 80px; /* Отступ под фиксированное меню */
+        }
+
+        /* Шапка-меню */
+        .menu {
+            background: #333;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            z-index: 999; /* чтобы меню было над контентом */
+        }
+        .menu-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .menu-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 200px;
+            overflow: hidden;
+        }
+        .teacher-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .teacher-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #f4f4f4;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        /* Кнопки в меню (как в исходном коде) */
+        .menu button {
+            background-color: #b8860b;
+            color: #fff;
+            border: none;
+            padding: 16px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            min-width: 180px;
+        }
+        .menu button:hover {
+            background-color: #8b6508;
+        }
+
+        /* Кнопка «Выйти» (возвращаем прежние размеры и цвета) */
+        .menu .logout-button {
+            background-color: #a83232;
+            color: #fff;
+            border: none;
+            padding: 16px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            min-width: 180px;
+        }
+        .menu .logout-button:hover {
+            background-color: #8b2525;
+        }
+
+        /* Контент */
+        .content {
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        /* Кнопка "Сохранить изменения" — с отступами, чтобы не налезала на блок */
+        .save-btn {
+            background-color: #28a745;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        .save-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Единый класс переключателей "Вкл/Выкл" для всех */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;   /* классический размер */
+            height: 30px;
+            vertical-align: middle;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #888;
+            transition: 0.4s;
+            border-radius: 34px; /* сделать фон овальным */
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;    /* чуть меньше 30px */
+            width: 26px;
+            left: 2px;       /* отступ слева */
+            bottom: 2px;     /* и снизу */
+            background-color: #fff;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #28a745; /* Зеленый цвет при включении */
+        }
+        input:checked + .slider:before {
+            transform: translateX(30px);
+            /* Двигаем на 30px (ширина - диаметр бегунка) */
+        }
+
+        /* Блок с глобальными переключателями */
+        .notifications-area {
+            width: 80%;
+            margin: 0 auto 20px auto;
+            background: #333;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: left;
+        }
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            justify-content: space-between;
+        }
+        .toggle-row span {
+            font-weight: bold;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        /* Таблица с учениками */
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: #333;
+            color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #555;
+            text-align: center;
+        }
+        th {
+            background-color: #b8860b;
+        }
+        tr:nth-child(even) {
+            background-color: #444;
+        }
+        tr:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Меню -->
+<div class="menu">
+    <div class="menu-left">
+        <button onclick="homePage()">Кабинет</button>
+        <button onclick="startNas()">Первая настройка</button>
+        <button onclick="updateStud()">Управление лекциями</button>
+        <button onclick="telegbot()">Работа с телеграмм ботом</button>
+        <button class="instruction-button" onclick="instruction()">Инструкция работы</button>
+    </div>
+    <div class="menu-right">
+        <div class="teacher-info">
+            <span class="teacher-name">{{.User.Name}}</span>
+            <button class="logout-button" onclick="logout()">Выйти</button>
+        </div>
+    </div>
+</div>
+
+<!-- Контент -->
+<div class="content">
+    <h2>Настройка уведомлений</h2>
+
+    <!-- Кнопка «Сохранить изменения» -->
+    <button class="save-btn" onclick="saveSettings()">Сохранить изменения</button>
+
+    <!-- Блок с глобальными переключателями -->
+    <div class="notifications-area">
+        <div class="toggle-row">
+            <span>Уведомления от telegram-бота</span>
+            <label class="switch">
+                <input type="checkbox" id="moduleAllToggle" {{if .vhod}}checked{{end}}>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+    <!-- Таблица с учениками и их настройками -->
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Имя ученика</th>
+            <th>Уведомление оплата</th>
+            <th>Уведомление модули</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range .students}}
+        <tr>
+            <td>{{.ID}}</td>
+            <td>{{.Name_Student}}</td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" class="payment-toggle" {{if .Alert_payment}}checked{{end}}>
+                    <span class="slider"></span>
+                </label>
+            </td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" class="module-toggle" {{if .Alert_moduls}}checked{{end}}>
+                    <span class="slider"></span>
+                </label>
+            </td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+
+    <!-- Повторная кнопка «Сохранить изменения» -->
+    <button class="save-btn" onclick="saveSettings()">Сохранить изменения</button>
+</div>
+
+<script>
+    // Переходы по меню
+    function homePage() {
+        window.location.href = "/kabinet";
+    }
+    function startNas() {
+        window.location.href = "/firstsetting";
+    }
+    function updateStud() {
+        window.location.href = "/lecture";
+    }
+    function telegbot() {
+        window.location.href = "/telegram_bot";
+    }
+    function instruction() {
+        window.location.href = "/instructions";
+    }
+    function logout() {
+        fetch("/logout", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert("Выход выполнен успешно!");
+                    window.location.href = `/`;
+                } else {
+                    alert("Ошибка: " + result.error);
+                }
+            })
+            .catch(error => console.error("Ошибка отправки данных:", error));
+    }
+
+    // Сохранение всех настроек
+    function saveSettings() {
+        // Глобальные переключатели
+        const moduleAll = document.getElementById("moduleAllToggle").checked;
+
+        // Считываем состояние переключателей у каждого ученика
+        const rows = document.querySelectorAll("table tbody tr");
+        let studentsData = [];
+        rows.forEach((row) => {
+            const id = row.cells[0].innerText.trim();
+            const name = row.cells[1].innerText.trim();
+
+            const paymentToggle = row.querySelector(".payment-toggle");
+            const moduleToggle = row.querySelector(".module-toggle");
+
+            studentsData.push({
+                id: parseInt(id, 10),
+                name: name,
+                Alertpayment: paymentToggle && paymentToggle.checked,
+                Alertmodules: moduleToggle && moduleToggle.checked
+            });
+        });
+
+        // Формируем объект для отправки
+        const dataToSend = {
+            moduleAllToggle: moduleAll,
+            students: studentsData
+        };
+
+        // Отправка на сервер (пример через fetch POST)
+        fetch("/telbot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataToSend),
+        })
+            .then(res => res.json())
+            .then(response => {
+                if (response.success) {
+                    alert("Изменения успешно сохранены!");
+                } else {
+                    alert("Ошибка при сохранении: " + response.error);
+                }
+            })
+            .catch(err => {
+                console.error("Ошибка при сохранении:", err);
+                alert("Ошибка при сохранении!");
+            });
+    }
+</script>
+
+</body>
+</html>
