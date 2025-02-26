@@ -139,6 +139,7 @@ func main() {
 	autRoute.GET("/result", resultPage)
 	autRoute.GET("/student", studentPage)
 	autRoute.GET("/telbot", telbotPage)
+	autRoute.GET("/we", wePage)
 	autRoute.POST("/firstsetting", firstSettingHandler)
 	autRoute.POST("/logout", logoutHandler)
 	autRoute.POST("/paymentstudent", paymentstudentHandler)
@@ -176,10 +177,13 @@ func verifyEmailPage(c *gin.Context) {
 	user.Verification_token = ""
 	db.Save(&user)
 	c.HTML(http.StatusOK, "verifyEmail.html", gin.H{"message": "Email успешно подтвержден! Теперь вы можете войти."})
-} //подтверждение почты
+} //стр подтверждение почты
 func verifyPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "verify.html", nil)
-}
+} //
+func wePage(c *gin.Context) {
+	c.HTML(http.StatusOK, "We.html", nil)
+} //моя страничка
 func firstSettinPage(c *gin.Context) {
 	userData, exists := c.Get("User") // Берем пользователя из контекста
 	if !exists || userData == nil {
@@ -711,7 +715,6 @@ func telbotHandler(c *gin.Context) {
 	if err != nil {
 		log.Println("ошибка в обнавлении разрешения на отправку уведомлений", err)
 	}
-	fmt.Println(input.ModuleAllToggle)
 	var outStudent_Alertpay []Table_student
 	var outStudent_Alertmod []Table_student
 	err = db.Model(&Table_student{}).Select("ID,Alert_payment").Where("User_id=?", user.ID).Find(&outStudent_Alertpay).Error
