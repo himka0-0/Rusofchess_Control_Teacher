@@ -141,9 +141,41 @@
             font-weight: bold;
             margin-bottom: 10px;
         }
+        .toast {
+            visibility: hidden; /* Скрыто по умолчанию */
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 20px; /* Позиционируем слева */
+            bottom: 30px; /* Отступ снизу */
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s, transform 0.5s;
+            transform: translateX(-100%); /* Начальное положение за пределами экрана */
+        }
+
+        .toast.show {
+            visibility: visible; /* Показываем */
+            opacity: 1; /* Делаем видимым */
+            transform: translateX(0); /* Сдвигаем на экран */
+        }
     </style>
 </head>
 <body>
+<div id="toast" class="toast">
+    <span id="toast-message"></span>
+</div>
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span id="modal-close" class="close">&times;</span>
+        <p id="modal-message"></p>
+    </div>
+</div>
 <div class="menu">
     <div class="menu-left">
         <button onclick="homePage()">Кабинет</button>
@@ -163,6 +195,9 @@
         function updateStud(){
             window.location.href = `/student`
         }
+        function telegbot(){
+            window.location.href =`/telbot`
+        }
         function logout() {
             fetch("/logout", {
                 method: "POST",
@@ -171,14 +206,32 @@
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
-                        alert("Выход выполен успешно!");
                         window.location.href = `/`;
                     } else {
-                        alert("Ошибка: " + result.error);
+                        showModal("Ошибка: " + result.error);
                     }
                 })
                 .catch(error => console.error("Ошибка отправки данных:", error));
         }
+        function showModal(message) {
+            const modal = document.getElementById("modal");
+            const modalMessage = document.getElementById("modal-message");
+            modalMessage.textContent = message;
+            modal.style.display = "flex";
+        }
+
+        function hideModal() {
+            const modal = document.getElementById("modal");
+            modal.style.display = "none";
+        }
+
+        document.getElementById("modal-close").addEventListener("click", hideModal);
+        window.addEventListener("click", function(event) {
+            const modal = document.getElementById("modal");
+            if (event.target === modal) {
+                hideModal();
+            }
+        });
     </script>
     <div class="menu-right">
         <div class="teacher-info">
@@ -209,7 +262,7 @@
                 const Payment = document.getElementById("lessonCount").value;
 
                 if (!ID || !Payment) {
-                    alert("Выберите ученика и введите количество уроков!");
+                    showToast("Выберите ученика и введите количество уроков!");
                     return;
                 }
                 fetch("/paymentstudent", {
@@ -225,15 +278,30 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert("Оплата успешно сохранена!");
+                            showToast("Оплата успешно сохранена!");
                         } else {
-                            alert("Ошибка при сохранении: " + data.error);
+                            showToast("Ошибка при сохранении: " + data.error);
                         }
                     })
                     .catch(error => {
                         console.error("Ошибка запроса:", error);
-                        alert("Ошибка при отправке данных");
+                        showToast("Ошибка при отправке данных");
                     });
+            }
+            function showToast(message, duration = 3000) {
+                const toast = document.getElementById("toast");
+                const toastMessage = document.getElementById("toast-message");
+
+                // Устанавливаем сообщение
+                toastMessage.textContent = message;
+
+                // Показываем toast
+                toast.classList.add("show");
+
+                // Скрываем toast через указанное время
+                setTimeout(() => {
+                    toast.classList.remove("show");
+                }, duration);
             }
         </script>
         <img class="side-image" src="/static/paywomen.webp" alt="Динозавр в очках">

@@ -119,13 +119,18 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert("Регистрация успешна! Нажмите `Войти`");
                     window.location.href = `/verify`
                 } else {
-                    alert("Ошибка: " + result.error);
+                    showModal("Ошибка", result.error);
                 }
             })
             .catch(error => console.error("Ошибка отправки данных:", error));
+        function showModal(title, message) {
+            const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+            document.getElementById('errorModalTitle').innerText = title;
+            document.getElementById('errorModalBody').innerText = message;
+            modal.show();
+        }
     }
 </script>
 </body>

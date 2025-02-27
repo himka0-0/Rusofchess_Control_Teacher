@@ -5,6 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавить ученика и лекцию</title>
     <style>
+        .toast {
+            visibility: hidden; /* Скрыто по умолчанию */
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 20px; /* Позиционируем слева */
+            bottom: 30px; /* Отступ снизу */
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s, transform 0.5s;
+            transform: translateX(-100%); /* Начальное положение за пределами экрана */
+        }
+
+        .toast.show {
+            visibility: visible; /* Показываем */
+            opacity: 1; /* Делаем видимым */
+            transform: translateX(0); /* Сдвигаем на экран */
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #333;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #f4f4f4;
+            text-decoration: none;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -142,7 +204,15 @@
     </style>
 </head>
 <body>
-<!-- Меню -->
+<div id="toast" class="toast">
+    <span id="toast-message"></span>
+</div>
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span id="modal-close" class="close">&times;</span>
+        <p id="modal-message"></p>
+    </div>
+</div>
 <div class="menu">
     <!-- Кнопки слева -->
     <div class="menu-left">
@@ -164,12 +234,14 @@
 <div class="container">
     <h2>Введите ФИО ученика и нажмите кнопку сохранить</h2>
     <input type="text" id="student-name" placeholder="Фамилия, имя, отчество ученика">
+    <div id="student-name-error" style="display: none; color: red;"></div>
     <button class="save-button" onclick="saveStudent()">Сохранить</button>
 </div>
 <div class="container">
     <h2>Введите название лекции и нажмите кнопку сохранить</h2>
     <p>(Рекомендация: вводите лекции в соответствии с вашим планом преподавания)</p>
     <input type="text" id="lesson-name" placeholder="Название лекции">
+    <div id="lesson-name-error" style="display: none; color: red;"></div>
     <button class="save-button" onclick="saveLesson()">Сохранить</button>
 </div>
 <div class="container">
@@ -197,8 +269,11 @@
 
     function saveStudent() {
         const studentName = document.getElementById("student-name").value;
+        const studentNameError = document.getElementById("student-name-error");
+        studentNameError.style.display = "none";
         if (!studentName) {
-            alert("Введите ФИО ученика");
+            studentNameError.textContent = "Введите ФИО ученика";
+            studentNameError.style.display = "block"; // Показываем сообщение об ошибке
             return;
         }
         const data = { Meaning: studentName, Marking: "1" };
@@ -210,10 +285,10 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert("Ученик сохранен");
-                    window.location.href = "/firstsetting";
+                    showToast("Ученик сохранен");
+                    document.getElementById("student-name").value = "";
                 } else {
-                    alert("Ошибка: " + result.error);
+                    showToast("Ошибка: " + result.error);
                 }
             })
             .catch(error => console.error("Ошибка отправки данных:", error));
@@ -221,9 +296,12 @@
 
     function saveLesson() {
         const lessonName = document.getElementById("lesson-name").value;
+        const lessonNameError = document.getElementById("lesson-name-error");
+        lessonNameError.style.display = "none";
         if (!lessonName) {
-            alert("Введите название лекции");
-            return;
+            lessonNameError.textContent = "Введите название лекции"; // Устанавливаем текст ошибки
+            lessonNameError.style.display = "block"; // Показываем сообщение об ошибке
+            return; // Прерываем выполнение
         }
         const data = { Meaning: lessonName, Marking: "0" };
         fetch("/firstsetting", {
@@ -234,10 +312,10 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert("Лекция сохранена");
-                    window.location.href = "/firstsetting";
+                    showToast("Лекция сохранена");
+                    document.getElementById("lesson-name").value = "";
                 } else {
-                    alert("Ошибка: " + result.error);
+                    showToast("Ошибка: " + result.error);
                 }
             })
             .catch(error => console.error("Ошибка отправки данных:", error));
@@ -251,14 +329,46 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert("Выход выполнен успешно!");
                     window.location.href = "/";
                 } else {
-                    alert("Ошибка: " + result.error);
+                    showModal("Ошибка: " + result.error);
                 }
             })
             .catch(error => console.error("Ошибка отправки данных:", error));
     }
+    function showModal(message) {
+        const modal = document.getElementById("modal");
+        const modalMessage = document.getElementById("modal-message");
+        modalMessage.textContent = message;
+        modal.style.display = "flex";
+    }
+
+    function hideModal() {
+        const modal = document.getElementById("modal");
+        modal.style.display = "none";
+    }
+    function showToast(message, duration = 3000) {
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toast-message");
+
+        // Устанавливаем сообщение
+        toastMessage.textContent = message;
+
+        // Показываем toast
+        toast.classList.add("show");
+
+        // Скрываем toast через указанное время
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, duration);
+    }
+    document.getElementById("modal-close").addEventListener("click", hideModal);
+    window.addEventListener("click", function(event) {
+        const modal = document.getElementById("modal");
+        if (event.target === modal) {
+            hideModal();
+        }
+    });
 </script>
 </body>
 </html>
