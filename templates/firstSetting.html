@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить ученика и лекцию</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #f4f4f4;
+            text-align: center;
+            /* Чтобы меню было фиксированным, контент не «прятался» под ним */
+            padding-top: 80px;
+            /* при желании подкорректируйте это значение */
+        }
+
+        /* Шапка-меню */
+        .menu {
+            background: #333;
+            /* как во втором примере */
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+        }
+
+        /* Кнопки слева */
+        .menu-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Делаем стиль кнопок меню таким же, как во втором примере */
+        .menu-left button {
+            background-color: #b8860b;
+            color: white;
+            border: none;
+            padding: 16px 20px;      /* размеры */
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            min-width: 180px;       /* ширина, как во втором примере */
+        }
+        .menu-left button:hover {
+            background-color: #8b6508;
+        }
+
+        /* Правая часть меню: имя + кнопка «Выйти» */
+        .menu-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 200px;
+            overflow: hidden;
+        }
+
+        .teacher-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #f4f4f4;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        .logout-button {
+            background-color: #a83232;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;       /* чуть меньше, как во втором примере */
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .logout-button:hover {
+            background-color: #8b2525;
+        }
+
+        /* Контейнеры с формами */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+        h2 {
+            margin-bottom: 10px;
+        }
+        input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            background: #fff;
+            color: #000;
+            display: block;
+        }
+
+        /* Кнопки внутри контейнеров (Сохранить).
+           Сделаем их немного больше по аналогии со "второй" страницей */
+        button.save-button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px 20px;       /* увеличили отступы */
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #b8860b;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button.save-button:hover {
+            background-color: #8b6508;
+        }
+
+        .telegram-link {
+            color: #b8860b;
+            text-decoration: none;
+        }
+        .telegram-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<!-- Меню -->
+<div class="menu">
+    <!-- Кнопки слева -->
+    <div class="menu-left">
+        <button onclick="homePage()">Кабинет</button>
+        <button onclick="updateLec()">Управление лекциями</button>
+        <button onclick="updateStud()">Управление учениками</button>
+        <button onclick="telegbot()">Работа с телеграмм ботом</button>
+        <button onclick="instruction()">Инструкция работы</button>
+    </div>
+
+    <!-- Справа: имя над кнопкой «Выйти» -->
+    <div class="menu-right">
+        <span class="teacher-name">{{ .User.Name }}</span>
+        <button class="logout-button" onclick="logout()">Выйти</button>
+    </div>
+</div>
+
+<!-- Основной блок: формы -->
+<div class="container">
+    <h2>Введите ФИО ученика и нажмите кнопку сохранить</h2>
+    <input type="text" id="student-name" placeholder="Фамилия, имя, отчество ученика">
+    <button class="save-button" onclick="saveStudent()">Сохранить</button>
+</div>
+<div class="container">
+    <h2>Введите название лекции и нажмите кнопку сохранить</h2>
+    <p>(Рекомендация: вводите лекции в соответствии с вашим планом преподавания)</p>
+    <input type="text" id="lesson-name" placeholder="Название лекции">
+    <button class="save-button" onclick="saveLesson()">Сохранить</button>
+</div>
+<div class="container">
+    <h2>Для уведомлений о нарушениях последовательности модулей и необходимости напомнить ученику об оплате</h2>
+    <p>Отправьте телеграмм-боту определенное сообщение: {{ .signification }} </p>
+    <p>Ссылка на <a class="telegram-link" href="https://t.me/Rusofchess_bot">телеграмм бота</a></p>
+</div>
+
+<script>
+    function homePage(){
+        window.location.href = '/kabinet'
+    }
+    function updateLec(){
+        window.location.href = '/lecture'
+    }
+    function updateStud(){
+        window.location.href = '/student'
+    }
+    function telegbot(){
+        window.location.href = '/telbot'
+    }
+    function instruction(){
+        window.location.href = '/instruction'
+    }
+
+    function saveStudent() {
+        const studentName = document.getElementById("student-name").value;
+        if (!studentName) {
+            alert("Введите ФИО ученика");
+            return;
+        }
+        const data = { Meaning: studentName, Marking: "1" };
+        fetch("/firstsetting", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert("Ученик сохранен");
+                    window.location.href = "/firstsetting";
+                } else {
+                    alert("Ошибка: " + result.error);
+                }
+            })
+            .catch(error => console.error("Ошибка отправки данных:", error));
+    }
+
+    function saveLesson() {
+        const lessonName = document.getElementById("lesson-name").value;
+        if (!lessonName) {
+            alert("Введите название лекции");
+            return;
+        }
+        const data = { Meaning: lessonName, Marking: "0" };
+        fetch("/firstsetting", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert("Лекция сохранена");
+                    window.location.href = "/firstsetting";
+                } else {
+                    alert("Ошибка: " + result.error);
+                }
+            })
+            .catch(error => console.error("Ошибка отправки данных:", error));
+    }
+
+    function logout() {
+        fetch("/logout", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"}
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert("Выход выполнен успешно!");
+                    window.location.href = "/";
+                } else {
+                    alert("Ошибка: " + result.error);
+                }
+            })
+            .catch(error => console.error("Ошибка отправки данных:", error));
+    }
+</script>
+</body>
+</html>
