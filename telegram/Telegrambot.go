@@ -5,13 +5,15 @@ import (
 	"awesomeProject1/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	"os"
 )
 
 var bot *tgbotapi.BotAPI
 
 func RunBot() {
 	var err error
-	bot, err = tgbotapi.NewBotAPI("7940048193:AAFPDbf0Ugpkk5Rc8yc_tfMF1DcjsvcgrVo")
+	botenv := os.Getenv("TELEGRAM_TOKEN")
+	bot, err = tgbotapi.NewBotAPI(botenv)
 	if err != nil {
 		log.Panic("Бот полег", err)
 	}
