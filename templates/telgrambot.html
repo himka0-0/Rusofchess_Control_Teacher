@@ -357,8 +357,8 @@
     function updateStud() {
         window.location.href = "/student";
     }
-    function instruction() {
-        window.location.href = "/instructions";
+    function instruction(){
+        window.location.href =`/instuction`
     }
     function logout() {
         fetch("/logout", {
@@ -448,7 +448,9 @@
             .then(response => {
                 if (response.success) {
                     showToast("Изменения успешно сохранены!");
-                } else {
+                } else if (response.suc){
+                    showToast("Настройте бота в первой настройке")
+                } else{
                     alert("Ошибка при сохранении: " + response.error);
                 }
             })

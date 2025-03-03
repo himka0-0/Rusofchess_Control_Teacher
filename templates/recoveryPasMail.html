@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аутентификация</title>
+    <title>Смена пароля</title>
     <style>
         .modal {
             display: none;
@@ -44,6 +44,7 @@
             color: #f4f4f4;
             text-decoration: none;
         }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -55,6 +56,7 @@
             align-items: center;
             height: 100vh;
         }
+
         .container {
             width: 100%;
             max-width: 400px;
@@ -64,9 +66,11 @@
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
             text-align: center;
         }
+
         h2 {
             margin-bottom: 20px;
         }
+
         input {
             width: calc(100% - 20px);
             margin-top: 10px;
@@ -78,6 +82,7 @@
             background: #fff;
             color: #000;
         }
+
         .btn {
             width: 100%;
             margin-top: 15px;
@@ -88,22 +93,27 @@
             cursor: pointer;
             transition: background 0.3s;
         }
+
         .btn-primary {
             background-color: #b8860b;
             color: white;
         }
+
         .btn-primary:hover {
             background-color: #8b6508;
         }
+
         .links {
             display: flex;
             justify-content: space-between;
             margin-top: 15px;
         }
+
         .link {
             color: #b8860b;
             text-decoration: none;
         }
+
         .link:hover {
             text-decoration: underline;
         }
@@ -117,13 +127,12 @@
     </div>
 </div>
 <div class="container">
-    <h2>Вход в аккаунт</h2>
-    <input type="email" id="email" placeholder="Введите email">
-    <input type="password" id="password" placeholder="Введите пароль">
-    <button class="btn btn-primary" onclick="authenticate()">Войти</button>
+    <h2>Смена пароля</h2>
+    <input type="password" id="new-password" placeholder="Новый пароль">
+    <input type="password" id="confirm-password" placeholder="Подтвердите новый пароль">
+    <button class="btn btn-primary" onclick="changePassword()">Сменить пароль</button>
     <div class="links">
-        <a href="/recoveryPassword" class="link">Забыли пароль?</a>
-        <a href="/registration" class="link">Регистрация</a>
+        <a href="/authentication" class="link">Назад в профиль</a>
     </div>
 </div>
 <script>
@@ -147,18 +156,25 @@
             hideModal();
         }
     });
-    function authenticate() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
 
-        if (!email || !password) {
-            alert("Пожалуйста, заполните все поля");
+    function changePassword() {
+        const newPassword = document.getElementById("new-password").value;
+        const confirmPassword = document.getElementById("confirm-password").value;
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (!newPassword || !confirmPassword) {
+            showModal("Пожалуйста, заполните все поля");
             return;
         }
 
-        const data = { email, password };
+        if (newPassword !== confirmPassword) {
+            showModal("Новый пароль и подтверждение пароля не совпадают");
+            return;
+        }
 
-        fetch("/authentication", {
+        const data = { newPassword,token };
+
+        fetch("/recovery-password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
@@ -166,7 +182,7 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    window.location.href = `/kabinet`;
+                    showModal("Пароль успешно изменен");
                 } else {
                     showModal("Ошибка: " + result.error);
                 }

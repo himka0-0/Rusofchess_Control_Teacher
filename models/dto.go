@@ -39,3 +39,11 @@ type PostTelbot struct {
 	ModuleAllToggle bool            `json:"moduleAllToggle"`
 	Students        []Table_student `json:"students"`
 }
+
+type PostRecovery struct {
+	Email string `json:"email"`
+}
+type PasswordRecovery struct {
+	Password string `json:"newPassword"`
+	Token    string `json:"token"`
+}

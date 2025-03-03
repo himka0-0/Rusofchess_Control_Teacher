@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция по работе с инструментами</title>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #333;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #f4f4f4;
+            text-decoration: none;
+        }
+        .about-link {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #f4f4f4;
+            text-decoration: none;
+            opacity: 0.7;
+        }
+
+        .about-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #f4f4f4;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .menu {
+            background: #333;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+        }
+        .menu-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .menu-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 200px;
+            overflow: hidden;
+        }
+        .menu button {
+            background-color: #b8860b;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            min-width: 180px;
+        }
+        .menu button:hover {
+            background-color: #8b6508;
+        }
+        .menu .logout-button {
+            background-color: #a83232;
+            min-width: auto;
+            padding: 12px 20px;
+        }
+        .menu .logout-button:hover {
+            background-color: #8b2525;
+        }
+        .teacher-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .teacher-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #f4f4f4;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            flex-grow: 1;
+            margin-top: 80px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        img {
+            max-width: 250px;
+            margin-bottom: 20px;
+        }
+        /* Стили для раскрывающихся меню (accordion) */
+        img.instruction-img {
+            max-width: 500px;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+        }
+        details {
+            background-color: #444;
+            padding: 15px;
+            margin: 15px auto;
+            border: 1px solid #666;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 800px;
+            text-align: left;
+        }
+        details summary {
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #f4f4f4;
+            outline: none;
+        }
+        details[open] summary {
+            color: #b8860b;
+        }
+        details p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        details ul {
+            margin: 10px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span id="modal-close" class="close">&times;</span>
+        <p id="modal-message"></p>
+    </div>
+</div>
+
+
+<div class="menu">
+    <div class="menu-left">
+        <button onclick="homePage()">Кабинет</button>
+        <button onclick="startNas()">Первая настройка</button>
+        <button onclick="updateLec()">Управление лекциями</button>
+        <button onclick="updateStud()">Управление учениками</button>
+        <button onclick="telegbot()">Работа с телеграмм ботом</button>
+    </div>
+    <div class="menu-right">
+        <div class="teacher-info">
+            <span class="teacher-name">{{ .User.Name }}</span>
+            <button class="logout-button" onclick="logout()">Выйти</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="content">
+    <h1>Инструкция по работе с инструментами</h1>
+    <p>Ниже приведены подробные инструкции по использованию основных инструментов системы.</p>
+
+    <details>
+        <summary>Первая настройка</summary>
+        <p>Для первой настройки системы необходимо выполнить следующие шаги:</p>
+        <ul>
+            <li>
+                Нажмите на кнопку <strong>Первая настройка</strong> в верхнем меню.
+            </li>
+            <li>
+                Введите имена учеников в форму настройки и нажмите сохранить.
+                <br>
+                <img src="/static/inststudent.JPG" alt="Ввод ученика" class="instruction-img">
+            </li>
+            <li>
+                Введите название лекции в форму настройки и нажмите сохранить (удобней вводить по плану преподавания).
+                <br>
+                <img src="/static/instlecture.JPG" alt="Ввод лекции" class="instruction-img">
+            </li>
+            <li>
+                Скопируйте значение.
+                <br>
+                <img src="/static/instznach.JPG" alt="Скопированное значение" class="instruction-img">
+            </li>
+            <li>
+                Нажмите на ссылку, которая переведёт вас к боту Телеграм.
+            </li>
+            <li>
+                Нажмите "Старт".
+                <br>
+                <img src="/static/inststart.JPG" alt="Нажатие 'Старт'" class="instruction-img">
+            </li>
+            <li>
+                Отправьте скопированное значение боту.
+                <br>
+                <img src="/static/insthash.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+            <li>
+                Перейдите на страницу "Управление учениками" и поставьте каждому ученику соответствующую лекцию
+            </li>
+            <li>
+                Первая настройка успешна! Если возникли проблемы, напишите в
+                <a class="telegram-link" href="https://t.me/ahimkas" target="_blank">Телеграм</a> — мы поможем!
+            </li>
+        </ul>
+    </details>
+
+    <details>
+        <summary>Управление лекциями</summary>
+        <p>В этом разделе можно менять названия и последовательность лекций,а так же создавать и удалять лекции:</p>
+        <ul>
+            <li>
+                Для создания лекции нажмите кнопку "добавить лекцию", не забудьте ввести название лекции и нажать "сохранить изменения"
+                <br>
+                <img src="/static/strlecture.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+            <li>
+                Для удалениия лекции необходимо нажать "удалить" и нажать "сохранить изменения"
+            </li>
+            <li>
+                Для изменения последовательности лекций у каждой лекции есть кнопки верх и вниз, не забывайте нажать "сохранить изменения"
+                <br>
+                <img src="/static/strlecturevverh.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+        </ul>
+    </details>
+
+    <details>
+        <summary>Управление учениками</summary>
+        <p>Этот раздел позволяет создать, удалить ученика и выбрать его уровень/лекцию</p>
+        <ul>
+            <li>
+                Для выбора уровня ученика/лекции нажмите на список и выберите лекцию, это поможет в будующем автоматически отслеживать лекции
+                <br>
+                <img src="/static/strstudent.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+        </ul>
+    </details>
+
+    <details>
+        <summary>Работа с Телеграм ботом</summary>
+        <p>Телеграм бот уведомляет Вас в случаях:
+            <li>Если у ученика 0(или меньше) на балансе</li>
+            <li>Если вы провели 3 раза один модуль(задачи, практика, теория)</li>
+        </p>
+        <p>Уведомления можно выключить, как все так и у каждого ученика</p>
+        <ul>
+            <li>
+                Отключить все уведомления
+                <img src="/static/strbotvse.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+            <li>
+                Отключить уведомления модулей у одного ученика
+                <img src="/static/strbotmod.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+            <li>
+                Отключить уведомления оплаты у одного ученика
+                <img src="/static/strbotopl.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+        </ul>
+    </details>
+
+    <details>
+        <summary>Общие инструменты</summary>
+        <p>Здесь собраны инструменты для контроля уроков и оплаты:</p>
+        <ul>
+            <li>
+                <p>Вывести всё</p>
+                Число в "лекция","пратика","задачи" показывает сколько раз подряд вы провели соответсвующий модуль
+                <img src="/static/vivod.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+            <li>
+                <p>Отметка урока</p>
+                Для отметки урока необходимо выбрать ученика и модуль
+                <img src="/static/otmetka_uroka.JPG" alt="Отправка хэша" class="instruction-img">
+                Если вы не хотите, чтоб у ученика лекция менялась, после выбора модуля "теория", нажмите "не менять лекцию"
+            </li>
+            <li>
+                <p>Отметка урока</p>
+                Для ввода олпаты ученика, выберите ученика и введите сколько уроков он оплатил
+                <img src="/static/payment.JPG" alt="Отправка хэша" class="instruction-img">
+            </li>
+        </ul>
+    </details>
+</div>
+
+
+<script>
+    function homePage(){
+        window.location.href = '/kabinet'
+    }
+    function startNas() {
+        window.location.href = `/firstsetting`;
+    }
+
+    function updateLec() {
+        window.location.href = `/lecture`;
+    }
+
+    function updateStud(){
+        window.location.href = `/student`;
+    }
+
+    function telegbot(){
+        window.location.href = `/telbot`;
+    }
+
+
+    function logout() {
+        fetch("/logout", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"}
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.href = `/`;
+                } else {
+                    showModal("Ошибка: " + result.error);
+                }
+            })
+            .catch(error => console.error("Ошибка отправки данных:", error));
+    }
+
+    function showModal(message) {
+        const modal = document.getElementById("modal");
+        const modalMessage = document.getElementById("modal-message");
+        modalMessage.textContent = message;
+        modal.style.display = "flex";
+    }
+
+    function hideModal() {
+        const modal = document.getElementById("modal");
+        modal.style.display = "none";
+    }
+
+    document.getElementById("modal-close").addEventListener("click", hideModal);
+    window.addEventListener("click", function(event) {
+        const modal = document.getElementById("modal");
+        if (event.target === modal) {
+            hideModal();
+        }
+    });
+</script>
+
+<a href="/we" class="about-link">о нас</a>
+</body>
+</html>
