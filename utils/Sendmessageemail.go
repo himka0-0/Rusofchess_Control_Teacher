@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/smtp"
+	"os"
 )
 
 func SendVerificationEmail(email string, token string) {
-	from := "maksim.grig02@mail.ru"
-	password := "fFM8jjTUrE9uzgEM7G40"
+	from := os.Getenv("MAIL_LOGIN")
+	password := os.Getenv("MAIL_PASSWORD")
 	to := []string{email}
-	smtpHost := "smtp.mail.ru"
-	smtpPort := "587"
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
 
 	verificationLink := fmt.Sprintf("http://localhost:8080/verify-email?token=%s", token)
 	message := []byte("Subject: Подтверждение регистрации\n\n" +
