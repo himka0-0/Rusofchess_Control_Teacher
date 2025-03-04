@@ -51,7 +51,6 @@ func TestLecturePage(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	r := gin.Default()
-	// Если нужно, загружаем шаблоны (иначе при рендере тоже будет panic)
 	r.LoadHTMLGlob("../templates/*")
 
 	// Эмулируем route: ставим пользователя в контекст и вызываем LecturePage

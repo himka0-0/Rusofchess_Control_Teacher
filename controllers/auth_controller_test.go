@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"bytes"
 	"encoding/json"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +19,16 @@ import (
 // Настройка тестового окружения
 func setupTestServer() *gin.Engine {
 	gin.SetMode(gin.TestMode)
+	customLogger.Logger = zap.NewNop() // или customLogger.InitLogger()
+
 	r := gin.Default()
+	// Пример передачи логгера в контекст (но он не заменяет package-level логгер)
+	logger := zap.NewNop()
+	r.Use(func(c *gin.Context) {
+		c.Set("logger", logger)
+		c.Next()
+	})
+
 	r.POST("/registration", RegHandler)
 	r.POST("/authentication", AutHandler)
 	return r
