@@ -1,8 +1,9 @@
 package utils
 
 import (
+	customLogger "awesomeProject1/logger"
 	"fmt"
-	"log"
+	"go.uber.org/zap"
 	"net/smtp"
 	"os"
 )
@@ -20,8 +21,8 @@ func SendVerificationEmail(email string, token string) {
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, message)
 	if err != nil {
-		log.Println("Ошибка при отправке письма:", err)
+		customLogger.Logger.Error("Ошибка при отправке письмо", zap.Error(err))
 	} else {
-		log.Println("Письмо отправлено на:", email)
+		customLogger.Logger.Info("Письмо с регистрацией отправлено")
 	}
 }

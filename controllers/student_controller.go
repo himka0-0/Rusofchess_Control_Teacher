@@ -2,27 +2,28 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 )
 
 func StudentPage(c *gin.Context) {
 	userData, exists := c.Get("User")
 	if !exists || userData == nil {
-		log.Println("проблема с вытаскиванием инфы про юзера", exists)
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 	}
 	user := userData.(models.User)
 	var lecture []models.Table_lecture
 	err := config.DB.Model(&models.Table_lecture{}).Select("Lecture_Person_id,Lecture").Where("User_id=?", user.ID).Find(&lecture).Error
 	if err != nil {
-		log.Println("ошибка при вытаскивании лекций", err)
+		customLogger.Logger.Error("Ошибка обращения к бд, поиск лекций, стр телеграм бота", zap.Error(err))
 	}
 	var students []models.Table_student
 	err = config.DB.Model(&models.Table_student{}).Select("ID,Name_Student,Namber_lecture").Where("User_id=?", user.ID).Find(&students).Error
 	if err != nil {
-		log.Println("Ошибка при вытаскивании студента", err)
+		customLogger.Logger.Error("Ошибка обращения к бд, Ошибка при вытаскивании студента, стр телеграм бота", zap.Error(err))
 	}
 
 	c.HTML(http.StatusOK, "student.html", gin.H{
@@ -35,22 +36,22 @@ func StudentPage(c *gin.Context) {
 func StudentHandler(c *gin.Context) {
 	userData, exists := c.Get("User")
 	if !exists || userData == nil {
-		log.Println("проблема с вытаскиванием инфы про юзера", exists)
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 	}
 	user, ok := userData.(models.User)
 	if !ok {
-		log.Println("Ошибка приведения userData к User")
+		customLogger.Logger.Warn("Ошибка приведения userData к User,стр студентов", zap.String("error", "Пользователь не авторизован"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка авторизации"})
 		return
 	}
 	var students []models.Table_student
 	err := config.DB.Model(&models.Table_student{}).Select("ID,Name_Student,Namber_lecture").Where("User_id=?", user.ID).Find(&students).Error
 	if err != nil {
-		log.Println("Ошибка при вытаскивании студента", err)
+		customLogger.Logger.Error("Ошибка обращения к бд, поиск студентов, стр студенты", zap.Error(err))
 	}
 	var input []models.PostStudent
 	if err = c.ShouldBindJSON(&input); err != nil {
-		log.Println("Ошибка при парсинге входных данных", err)
+		customLogger.Logger.Error("Ошибка парсинга входящих данных, стр студенты", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверные входные данные"})
 		return
 	}
@@ -66,7 +67,7 @@ func StudentHandler(c *gin.Context) {
 			newStudent := models.Table_student{User_id: user.ID, Name_Student: el.Name, Namber_lecture: el.Lecture, Alert_payment: true, Alert_moduls: true}
 			err = config.DB.Create(&newStudent).Error
 			if err != nil {
-				log.Println("ошибка при сохранении ученика", err)
+				customLogger.Logger.Error("Ошибка сохранения студента, стр студенты", zap.Error(err))
 			} else {
 				updatedInput = append(updatedInput, models.PostStudent{ID: newStudent.ID, Name: newStudent.Name_Student, Lecture: newStudent.Namber_lecture})
 				newStudentIDs = append(newStudentIDs, newStudent.ID)
@@ -94,14 +95,17 @@ func StudentHandler(c *gin.Context) {
 	}
 
 	if len(studentsToDelete) > 0 {
-		config.DB.Where("user_id = ? AND id IN (?)", user.ID, studentsToDelete).Delete(&models.Table_student{})
+		err = config.DB.Where("user_id = ? AND id IN (?)", user.ID, studentsToDelete).Delete(&models.Table_student{}).Error
+		if err != nil {
+			customLogger.Logger.Error("Ошибка удаления ученика, стр студенты", zap.Error(err))
+		}
 	}
 
 	for _, el := range updatedInput {
 		if existing, found := studentMap[el.ID]; found {
 			if el.Lecture != existing.Namber_lecture {
 				if err = config.DB.Model(&models.Table_student{}).Where("ID = ?", el.ID).UpdateColumn("Namber_lecture", el.Lecture).Error; err != nil {
-					log.Println("Ошибка при обновлении лекций", err)
+					customLogger.Logger.Error("Ошибка при обновлении лекций ученика, стр студенты", zap.Error(err))
 				}
 			}
 		}

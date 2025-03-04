@@ -2,10 +2,10 @@ package middlewares
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"log"
 	"net/http"
 	"os"
 )
@@ -22,7 +22,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		claims := jwt.MapClaims{}
 		jwtSecret := os.Getenv("JWT_SECRET") // Загружаем секретный ключ из .env
 		if jwtSecret == "" {
-			log.Fatal("JWT_SECRET не найден в .env")
+			customLogger.Logger.Fatal("JWT_SECRET не найден в .env")
 		}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(jwtSecret), nil
@@ -42,7 +42,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		var user models.User
 		err = config.DB.Where("email = ?", emailFromToken).First(&user).Error
 		if err != nil {
-			log.Println("Ошибка получения пользователя:", err)
 			c.Redirect(http.StatusSeeOther, "/authentication")
 			c.Abort()
 			return

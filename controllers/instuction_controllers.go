@@ -1,16 +1,17 @@
 package controllers
 
 import (
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 )
 
 func InstructionPage(c *gin.Context) {
 	userData, exists := c.Get("User")
 	if !exists || userData == nil {
-		log.Println("Пользователь не найден в middleware")
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 		c.HTML(http.StatusUnauthorized, "error.html", gin.H{"error": "Пользователь не авторизован"})
 		return
 	}

@@ -2,12 +2,13 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"awesomeProject1/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 )
 
@@ -18,7 +19,7 @@ func RecoveryPasHandler(c *gin.Context) {
 	var input models.PostRecovery
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
-		log.Println("ошибка парсинга почты при востановлении", err)
+		customLogger.Logger.Error("Ошибка парсинга почты при востановлении, стр востановления пароля", zap.Error(err))
 	}
 	var user models.User
 	if err = config.DB.Model(&models.User{}).Where("email=?", input.Email).First(&user).Error; err != nil {
@@ -27,7 +28,9 @@ func RecoveryPasHandler(c *gin.Context) {
 	}
 	RecoveryToken := utils.GenerationToken()
 	err = config.DB.Model(&models.User{}).Where("email=?", input.Email).Update("Verification_token", RecoveryToken).Error
-
+	if err != nil {
+		customLogger.Logger.Error("Ошибка обнавления токена, стр востановления пароля", zap.Error(err))
+	}
 	go utils.RecoveryPassword(user.Email, RecoveryToken)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Инструкция отправлена на почту"})
 }
@@ -38,12 +41,12 @@ func RecMailHandler(c *gin.Context) {
 	var input models.PasswordRecovery
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
-		log.Println("Ошибка парсинга данных при востановлении пароля после почты", err)
+		customLogger.Logger.Error("Ошибка парсинга данных при востановлении пароля после почты, стр востановления пароля", zap.Error(err))
 	}
 	var user models.User
 	err = config.DB.Model(&models.User{}).Where("Verification_token=?", input.Token).First(&user).Error
 	if err != nil {
-		log.Println("Ошибка определения пользователя по токену при востановлении пароля", err)
+		customLogger.Logger.Error("Ошибка определения пользователя по токену при востановлении пароля, стр востановления пароля", zap.Error(err))
 	}
 
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
@@ -56,7 +59,7 @@ func RecMailHandler(c *gin.Context) {
 		"Verification_token": "",
 	}).Error
 	if err != nil {
-		log.Println("ошибка при изменеии пароля", err)
+		customLogger.Logger.Error("ошибка при изменеии пароля, стр востановления пароля", zap.Error(err))
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Пароль успешно изменен"})
 }

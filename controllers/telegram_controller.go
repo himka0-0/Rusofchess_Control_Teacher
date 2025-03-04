@@ -2,25 +2,29 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 )
 
 func TelbotPage(c *gin.Context) {
 	userData, exists := c.Get("User")
 	if !exists || userData == nil {
-		log.Println("проблема с вытаскиванием инфы про юзера", exists)
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 	}
 	user := userData.(models.User)
 	var students []models.Table_student
 	err := config.DB.Model(&models.Table_student{}).Select("ID,Name_Student,Alert_payment,Alert_moduls").Where("User_id=?", user.ID).Find(&students).Error
 	if err != nil {
-		log.Println("стр телеграмбота ошибка с вытаскиванием студентов")
+		customLogger.Logger.Error("Ошибка обращения к бд, поиск студентов, стр телеграм бота", zap.Error(err))
 	}
 	var vhod bool
 	err = config.DB.Model(&models.Table_telegram_bot{}).Select("Vhod").Where("User_id=?", user.ID).Scan(&vhod).Error
+	if err != nil {
+		customLogger.Logger.Error("Ошибка поиска информации о наличии метки входа,стр телеграм бота", zap.Error(err))
+	}
 	c.HTML(http.StatusOK, "telgrambot.html", gin.H{
 		"students": students,
 		"User":     user,
@@ -30,19 +34,19 @@ func TelbotPage(c *gin.Context) {
 func TelbotHandler(c *gin.Context) {
 	userData, exists := c.Get("User")
 	if !exists || userData == nil {
-		log.Println("проблема с вытаскиванием инфы про юзера", exists)
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 	}
 	user := userData.(models.User)
 
 	var input models.PostTelbot
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
-		log.Println("Ошибка при парсинге поступления со стр настройки телеграмм бота", err)
+		customLogger.Logger.Error("Ошибка парсинга входящих данных, стр телеграм бота", zap.Error(err))
 	}
 	var conrolID models.Table_telegram_bot
 	err = config.DB.Model(&models.Table_telegram_bot{}).Select("Telegram_id").Where("User_id=?", user.ID).Find(&conrolID).Error
 	if err != nil {
-		log.Println("ошибка при проверка наличия telegramID", err)
+		customLogger.Logger.Error("Ошибка обращения к бд, налчиие telegram id, стр телеграм бота", zap.Error(err))
 	}
 
 	if conrolID.Telegram_id == 0 {
@@ -50,18 +54,18 @@ func TelbotHandler(c *gin.Context) {
 	} else {
 		err = config.DB.Model(&models.Table_telegram_bot{}).Where("User_id=?", user.ID).Update("Vhod", input.ModuleAllToggle).Error
 		if err != nil {
-			log.Println("ошибка в обнавлении разрешения на отправку уведомлений", err)
+			customLogger.Logger.Error("ошибка в обнавлении разрешения на отправку уведомлений, стр телеграм бота", zap.Error(err))
 		}
 
 		var outStudent_Alertpay []models.Table_student
 		var outStudent_Alertmod []models.Table_student
 		err = config.DB.Model(&models.Table_student{}).Select("ID,Alert_payment").Where("User_id=?", user.ID).Find(&outStudent_Alertpay).Error
 		if err != nil {
-			log.Println("стр телеграмбота ошибка с вытаскиванием студентов")
+			customLogger.Logger.Error("Ошибка обращения к бд, поиск студентов, стр телеграм бота", zap.Error(err))
 		}
 		err = config.DB.Model(&models.Table_student{}).Select("ID,Alert_moduls").Where("User_id=?", user.ID).Find(&outStudent_Alertmod).Error
 		if err != nil {
-			log.Println("стр телеграмбота ошибка с вытаскиванием студентов")
+			customLogger.Logger.Error("Ошибка обращения к бд, поиск студентов, стр телеграм бота", zap.Error(err))
 		}
 		ModulMap := make(map[int]bool)
 		for _, modul := range outStudent_Alertmod {
@@ -75,7 +79,7 @@ func TelbotHandler(c *gin.Context) {
 			if ModulMap[el.ID] != el.Alert_moduls {
 				err = config.DB.Model(&models.Table_student{}).Where("ID=?", el.ID).Update("Alert_moduls", el.Alert_moduls).Error
 				if err != nil {
-					log.Println("ошибка в записи уведомлений модулей", err)
+					customLogger.Logger.Error("Ошибка обращения к бд, ошибка в записи уведомлений модулей, стр телеграм бота", zap.Error(err))
 				}
 			}
 		}
@@ -83,7 +87,7 @@ func TelbotHandler(c *gin.Context) {
 			if PaymentMap[el.ID] != el.Alert_payment {
 				err = config.DB.Model(&models.Table_student{}).Where("ID=?", el.ID).Update("Alert_payment", el.Alert_payment).Error
 				if err != nil {
-					log.Println("ошибка в записи уведомлений оплаты", err)
+					customLogger.Logger.Error("Ошибка обращения к бд, ошибка в записи уведомлений оплаты, стр телеграм бота", zap.Error(err))
 				}
 			}
 		}

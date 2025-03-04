@@ -2,23 +2,24 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 )
 
 func ResultPage(c *gin.Context) {
 	userData, exists := c.Get("User") // Берем пользователя из контекста
 	if !exists || userData == nil {
-		log.Println("Пользователь не найден в middleware")
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 		c.HTML(http.StatusUnauthorized, "error.html", gin.H{"error": "Пользователь не авторизован"})
 		return
 	}
 	user := userData.(models.User)
 	emailData, exists := c.Get("email") // Берем пользователя из контекста
 	if !exists || emailData == nil {
-		log.Println("Пользователь не найден в middleware")
+		customLogger.Logger.Warn("Проблема в контексте", zap.String("error", "Пользователь не авторизован"))
 		c.HTML(http.StatusUnauthorized, "error.html", gin.H{"error": "Пользователь не авторизован"})
 		return
 	}
@@ -26,12 +27,12 @@ func ResultPage(c *gin.Context) {
 	var userID uint
 	err := config.DB.Model(&models.User{}).Select("ID").Where("email=?", email).Scan(&userID).Error
 	if err != nil {
-		log.Println("в итоге не смог вытащить id", err)
+		customLogger.Logger.Error("Не смог определить id, стр вывода всего", zap.Error(err))
 	}
 	var output []models.Table_student
 	err = config.DB.Model(&models.Table_student{}).Select("ID,Name_Student,Payment,Theory,Practice,Tasks,Namber_lecture").Where("User_id = ?", userID).Find(&output).Error
 	if err != nil {
-		log.Println("не смог создать таблицу", err)
+		customLogger.Logger.Error("Ошибка определения в бд, стр вывести всё", zap.Error(err))
 	}
 	var lecture []models.Table_lecture
 	err = config.DB.Model(&models.Table_lecture{}).Select("Lecture_Person_id,Lecture").Where("User_id=?", userID).Find(&lecture).Error

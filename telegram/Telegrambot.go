@@ -2,9 +2,10 @@ package telegram
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -15,7 +16,7 @@ func RunBot() {
 	botenv := os.Getenv("TELEGRAM_TOKEN")
 	bot, err = tgbotapi.NewBotAPI(botenv)
 	if err != nil {
-		log.Panic("Бот полег", err)
+		customLogger.Logger.Fatal("телеграм бот лег")
 	}
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -29,8 +30,6 @@ func RunBot() {
 
 		messageText := update.Message.Text
 		chatID := update.Message.Chat.ID
-
-		log.Printf("[%s] %s", username, messageText)
 
 		msg := tgbotapi.NewMessage(chatID, "")
 
@@ -53,7 +52,7 @@ func Validation_hash(text string) bool {
 	var hashs []models.Table_telegram_bot
 	err := config.DB.Model(&models.Table_telegram_bot{}).Select("User_id,hash").Scan(&hashs).Error
 	if err != nil {
-		log.Println("ошибка втаскивания хешей")
+		customLogger.Logger.Error("ошибка обращения к бд, вытаскивание хеша, функция телеграм бота", zap.Error(err))
 	}
 	var presence_hash int
 	var presence bool
@@ -71,9 +70,9 @@ func Validation_hash(text string) bool {
 }
 
 func SaveUsers(username string, messageText string, chatID int64) {
-	err := config.DB.Model(&models.Table_telegram_bot{}).Where("hash=?", messageText).Updates(&models.Table_telegram_bot{First_name: username, Telegram_id: chatID, Vhod: true})
+	err := config.DB.Model(&models.Table_telegram_bot{}).Where("hash=?", messageText).Updates(&models.Table_telegram_bot{First_name: username, Telegram_id: chatID, Vhod: true}).Error
 	if err != nil {
-		log.Println("Не получилось записать данные телеграмм препода", err)
+		customLogger.Logger.Error("ошибка обращения к бд, не обнавился препод, функция телеграм бота", zap.Error(err))
 	}
 }
 
@@ -81,13 +80,13 @@ func MessageBot(message string, nameStudent string, IdTeacher uint) {
 	var onoff bool
 	err := config.DB.Model(&models.Table_telegram_bot{}).Select("vhod").Where("User_id=?", IdTeacher).Find(&onoff).Error
 	if err != nil {
-		log.Println("Проблема с вытаскиванием включателя уведомлений", err)
+		customLogger.Logger.Error("проблема обращения к бд, определение выключателя, функция телеграмм бота", zap.Error(err))
 	}
 	if onoff == true {
 		var dialogue int64
 		err = config.DB.Model(&models.Table_telegram_bot{}).Select("telegram_id").Where("User_id=?", IdTeacher).Find(&dialogue).Error
 		if err != nil {
-			log.Println("Проблема с вытаскиванием включателя уведомлений", err)
+			customLogger.Logger.Error("проблема обращения к бд, определение выключателя, функция телеграмм бота", zap.Error(err))
 		}
 		message = message + " " + nameStudent
 		msg := tgbotapi.NewMessage(dialogue, message)

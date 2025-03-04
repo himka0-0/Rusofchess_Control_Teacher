@@ -2,6 +2,7 @@ package main
 
 import (
 	"awesomeProject1/config"
+	"awesomeProject1/logger"
 	"awesomeProject1/models"
 	"awesomeProject1/router"
 	"awesomeProject1/telegram"
@@ -17,6 +18,9 @@ func init() {
 }
 
 func main() {
+	logger.InitLogger()
+	defer logger.Logger.Sync()
+	logger.Logger.Info("Приложение запущено")
 	config.InitDB()
 	config.DB.AutoMigrate(&models.User{}, &models.Table_student{}, &models.Table_lecture{}, &models.Table_telegram_bot{})
 	go telegram.RunBot()

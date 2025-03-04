@@ -1,10 +1,10 @@
 package config
 
 import (
+	customLogger "awesomeProject1/logger"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"os"
 )
 
@@ -22,6 +22,6 @@ func InitDB() {
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("❌ Ошибка подключения к БД:", err)
+		customLogger.Logger.Fatal("Ошибка подключения к бд")
 	}
 }

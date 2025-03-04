@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"awesomeProject1/utils"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -26,12 +26,12 @@ func RegPage(c *gin.Context) {
 func RegHandler(c *gin.Context) {
 	var user models.User
 	if er := c.ShouldBindJSON(&user); er != nil {
-		fmt.Println("ошибка парсинга при реге", er)
+		customLogger.Logger.Error("ошибка парсинга при регистрации", zap.Error(er))
 	}
 
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Println("проблемы хеширования", err)
+		customLogger.Logger.Error("ошибка хеширования пароля при регистрации", zap.Error(err))
 	}
 	user.Password = string(hashPass)
 
@@ -40,13 +40,13 @@ func RegHandler(c *gin.Context) {
 
 	err = config.DB.Create(&user).Error
 	if err != nil {
-		log.Println("Ошибка создания пользователя в бд", err)
+		customLogger.Logger.Error("ошибка создания пользователя в бд при регистрации", zap.Error(err))
 	}
 	go func() {
 		hash := utils.HashIDAndEmail(user.ID, user.Email)
 		err = config.DB.Create(&models.Table_telegram_bot{User_id: user.ID, Hash: hash, Vhod: false}).Error
 		if err != nil {
-			log.Println("Ошибка создания пользователя в таблице телеграм бота", err)
+			customLogger.Logger.Error("ошибка создания пользователя в таблице телеграм бота при регистрации", zap.Error(err))
 		}
 	}()
 	c.JSON(http.StatusOK, gin.H{
@@ -63,7 +63,7 @@ func AutPage(c *gin.Context) {
 func AutHandler(c *gin.Context) {
 	var input models.User
 	if err := c.ShouldBindJSON(&input); err != nil {
-		fmt.Println("Ошибка парсинга", err)
+		customLogger.Logger.Error("ошибка парсинга при аутентификации", zap.Error(err))
 	}
 	var user models.User
 	if er := config.DB.Where("email=?", input.Email).First(&user).Error; er != nil {
@@ -145,7 +145,7 @@ func GenerateJwt(email string) string {
 
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		log.Println("ошибка в GenerateJwt", err)
+		customLogger.Logger.Error("ошибка в GenerateJwt", zap.Error(err))
 	}
 	return tokenString
 }

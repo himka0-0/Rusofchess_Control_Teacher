@@ -2,11 +2,12 @@ package controllers
 
 import (
 	"awesomeProject1/config"
+	customLogger "awesomeProject1/logger"
 	"awesomeProject1/models"
 	"awesomeProject1/telegram"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	"os"
 )
@@ -14,7 +15,7 @@ import (
 func NotelessonPage(c *gin.Context) {
 	userData, exists := c.Get("User") // Берем пользователя из контекста
 	if !exists || userData == nil {
-		log.Println("Пользователь не найден в middleware")
+		customLogger.Logger.Warn("Проблема в контексте стр отметки урока", zap.String("error", "Пользователь не авторизован"))
 		c.HTML(http.StatusUnauthorized, "error.html", gin.H{"error": "Пользователь не авторизован"})
 		return
 	}
@@ -24,7 +25,7 @@ func NotelessonPage(c *gin.Context) {
 	claims := jwt.MapClaims{}
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET не найден в .env")
+		customLogger.Logger.Fatal("JWT_SECRET не найден в .env")
 	}
 	_, _ = jwt.ParseWithClaims(tokenstr, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecret), nil
@@ -34,13 +35,13 @@ func NotelessonPage(c *gin.Context) {
 	var userID uint
 	err := config.DB.Model(&models.User{}).Select("id").Where("email = ?", emailFromToken).Scan(&userID).Error
 	if err != nil {
-		log.Println("не могу наути пользователя")
+		customLogger.Logger.Error("Ошибка обращения к бд, не найден пользоваль, стр отметки урока", zap.Error(err))
 		return
 	}
 	var students []models.Table_student
 	err = config.DB.Model(&models.Table_student{}).Select("ID,Name_Student").Where("User_id = ?", userID).Scan(&students).Error
 	if err != nil {
-		log.Println(err)
+		customLogger.Logger.Error("Ошибка обращения к бд, студенты не вытащены, стр отметки урока", zap.Error(err))
 	}
 	c.HTML(http.StatusOK, "notelesson.html", gin.H{
 		"students": students,
@@ -52,11 +53,11 @@ func NotelessonHandler(c *gin.Context) {
 	var input models.PostModuls
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
-		log.Println(err)
+		customLogger.Logger.Error("Ошибка парсинга приходящих данных, стр отметки урока", zap.Error(err))
 	}
 	var student models.Table_student
 	if err = config.DB.Where("id=?", input.Student_id).First(&student).Error; err != nil {
-		log.Println("Ученик не найден:", err)
+		customLogger.Logger.Error("Ошибка обращения к бд, не найден пользоваль, стр отметки урока", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "Ученик не найден"})
 		return
 	}
@@ -98,7 +99,7 @@ func NotelessonHandler(c *gin.Context) {
 		telegram.MessageBot(message, student.Name_Student, student.User_id)
 	}
 	if err = config.DB.Save(&student).Error; err != nil {
-		log.Println("Ошибка при обновлении данных ученика:", err)
+		customLogger.Logger.Error("Ошибка при обнавлении ученика стр отметки урока", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Ошибка при сохранении"})
 		return
 	}
