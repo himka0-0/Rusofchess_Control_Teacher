@@ -9,7 +9,7 @@ type User struct {
 	Password            string `gorm:"not null"`
 	Lectures_introduced int    `gorm:"size 100"`
 	Email_verified      bool   `gorm:"default:false"`
-	Verification_token  string `gorm:"size 100;unique"`
+	Verification_token  string `gorm:"size 100"`
 	Table_student       []Table_student
 	Table_lecture       []Table_lecture
 	Table_telegram_bot  []Table_telegram_bot
