@@ -35,6 +35,8 @@ func RegHandler(c *gin.Context) {
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		customLogger.Logger.Error("ошибка хеширования пароля при регистрации", zap.Error(err))
+		c.JSON(http.StatusBadRequest, "не правильные данные")
+		return
 	}
 	user.Password = string(hashPass)
 
