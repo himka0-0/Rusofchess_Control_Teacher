@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// Git training comment
 // aut
 func FirstPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "nachalo.html", nil)
