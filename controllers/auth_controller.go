@@ -46,8 +46,6 @@ func RegHandler(c *gin.Context) {
 	err = config.DB.Create(&user).Error
 	if err != nil {
 		customLogger.Logger.Error("ошибка создания пользователя в бд при регистрации", zap.Error(err))
-		c.JSON(http.StatusBadRequest, "не правильные данные")
-		return
 	}
 	go func() {
 		hash := utils.HashIDAndEmail(user.ID, user.Email)
