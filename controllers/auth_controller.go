@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// Git training comment
 // aut
 func FirstPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "nachalo.html", nil)
@@ -27,6 +28,8 @@ func RegHandler(c *gin.Context) {
 	var user models.User
 	if er := c.ShouldBindJSON(&user); er != nil {
 		customLogger.Logger.Error("ошибка парсинга при регистрации", zap.Error(er))
+		c.JSON(http.StatusBadRequest, "не правильные данные")
+		return
 	}
 
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
